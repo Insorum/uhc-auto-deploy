@@ -49,13 +49,13 @@ download_jar()
 }
 
 # parse all the options
-while getopts "n:j:v:hs" opt
+while getopts "n:j:v:hsp" opt
 do
   case "$opt" in
   n) SCREEN_NAME="${OPTARG}";;
   j) FILE_NAME="${OPTARG}";;
   v) VERSION="${OPTARG}";;
-  s) SKIP_INSTALL=true;;
+  d) SKIP_INSTALL=true;;
   s) SKIP_DOWNLOAD=true;;
   p) SKIP_PROPERTIES=true;;
   [?h])
