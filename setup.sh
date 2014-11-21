@@ -41,16 +41,10 @@ generate-structures=true
 view-distance=8
 motd=Insorum UHC"
 
-# Downloads the version set in $VERSION (prompts for input if wasnt able to fetch it
-# Returns 0 on success and 1 on failure
-download_jar_version()
+# Downloads the version set in $VERSION
+# Returns 0 on success and 1 on failure, sets JAR_DOWNLOADED on complete
+download_jar()
 {
-  # if version isnt set then prompt for it
-  if [ ! -z "$VERSION" ]
-  then
-    read_version
-  fi
-
   # fetch the jar with the given version
   wget --no-check-certificate -O ${FILE_NAME} ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar
 
@@ -64,7 +58,6 @@ download_jar_version()
     return 1
   fi
 }
-
 
 download_jar_prompts()
 {
@@ -122,7 +115,7 @@ else
   # if user provided only attempt to download that one
   if [ ! -z "$VERSION" ]
   then
-    if [ ! download_jar_version ]
+    if [ ! download_jar ]
     then
       echo "Failed to download chosen version. Cancelling" >&2
       exit 1
