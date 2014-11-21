@@ -14,11 +14,6 @@
 # AUTHOR: Graham Howden, graham_howden1@yahoo.co.uk
 #======================================================================================
 
-#=== FUNCTION =========================================================================
-# NAME: usage
-# DESCRIPTION: Display usage information for this script.
-#======================================================================================
-
 FILE_NAME="minecraft_server.jar"  # file name to store JAR as
 SCREEN_NAME="uhc_minecraft"       # screen name to run under
 
@@ -28,6 +23,10 @@ SKIP_DOWNLOAD=false
 SKIP_PROPERTIES=false
 JAR_DOWNLOADED=false
 
+#=== FUNCTION =========================================================================
+# NAME: usage
+# DESCRIPTION: Display usage information for this script.
+#======================================================================================
 usage()
 {
   cat <<-EOT
