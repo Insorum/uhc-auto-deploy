@@ -63,8 +63,13 @@ generate-structures=true
 view-distance=8
 motd=Insorum UHC"
 
-# Downloads the version set in $VERSION
-# Returns 0 on success and 1 on failure, sets JAR_DOWNLOADED on complete
+#=== FUNCTION =========================================================================
+# NAME: download_jar
+# DESCRIPTION: Downloads the JAR of version $VERSION to the file name $FILE_NAME
+# from the URL ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar. Sets
+# $JAR_DOWNLOADED when downloaded.
+# RETURNS: 0 on success and 1 on failure to download
+#======================================================================================
 download_jar()
 {
   # fetch the jar with the given version
@@ -81,6 +86,11 @@ download_jar()
   fi
 }
 
+#=== FUNCTION =========================================================================
+# NAME: download_jar_prompts
+# DESCRIPTION: Asks the user for a version # and attempts to download that version.
+# Reasks for the version number after every failed download
+#======================================================================================
 download_jar_prompts()
 {
   until [ ${JAR_DOWNLOADED} ]
@@ -90,13 +100,20 @@ download_jar_prompts()
   done
 }
 
-# read the version # to use
+#=== FUNCTION =========================================================================
+# NAME: read_version
+# DESCRIPTION: Asks the user for a version number and reads it into $VERSION
+#======================================================================================
 read_version()
 {
   read -e -p "What version do you like to install? " VERSION
 }
 
-# installs the required dependencies we need to run
+#=== FUNCTION =========================================================================
+# NAME: install_dependencies
+# DESCRIPTION: Installs the required dependencies for the script (screen and a JDK)
+# NOTES: Only works on systems with apt-get
+#======================================================================================
 install_dependencies()
 {
   echo "Installing dependencies"
