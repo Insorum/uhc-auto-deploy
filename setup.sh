@@ -18,6 +18,16 @@
 # NAME: usage
 # DESCRIPTION: Display usage information for this script.
 #======================================================================================
+
+FILE_NAME="minecraft_server.jar"  # file name to store JAR as
+SCREEN_NAME="uhc_minecraft"       # screen name to run under
+
+# all false by default
+SKIP_INSTALL=false
+SKIP_DOWNLOAD=false
+SKIP_PROPERTIES=false
+JAR_DOWNLOADED=false
+
 usage()
 {
   cat <<-EOT
@@ -32,35 +42,6 @@ usage()
     -p skips server.properties write
 EOT
 }
-
-FILE_NAME="minecraft_server.jar"
-SCREEN_NAME="uhc_minecraft"
-
-# all false by default
-SKIP_INSTALL=false
-SKIP_DOWNLOAD=false
-SKIP_PROPERTIES=false
-JAR_DOWNLOADED=false
-
-DEFAULT_PROPERTIES="op-permission-level=4
-allow-nether=true
-level-name=world
-allow-flight=true
-announce-player-achievements=false
-server-port=25565
-white-list=true
-spawn-animals=true
-hardcore=false
-snooper-enabled=true
-online-mode=true
-pvp=true
-difficulty=3
-enable-command-block=true
-gamemode=0
-spawn-monsters=true
-generate-structures=true
-view-distance=8
-motd=Insorum UHC"
 
 #=== FUNCTION =========================================================================
 # NAME: download_jar
@@ -124,6 +105,44 @@ install_dependencies()
   apt-get install -y screen default-jdk
 }
 
+#=== FUNCTION =========================================================================
+# NAME: write_default_properties
+# DESCRIPTION: Writes a simple server.properties file
+#======================================================================================
+write_default_properties()
+{
+  cat <<-EOT > server.properties
+op-permission-level=4
+allow-nether=true
+level-name=world
+allow-flight=true
+announce-player-achievements=false
+server-port=25565
+white-list=true
+spawn-animals=true
+hardcore=false
+snooper-enabled=true
+online-mode=true
+pvp=true
+difficulty=3
+enable-command-block=true
+gamemode=0
+spawn-monsters=true
+generate-structures=true
+view-distance=8
+motd=Insorum UHC
+EOT
+}
+
+#=== FUNCTION =========================================================================
+# NAME: write_eula_file
+# DESCRIPTION: Writes a valid eula.txt
+#======================================================================================
+write_eula_file()
+{
+  echo "eula=true" > eula.txt
+}
+
 # parse all the options
 while getopts "n:j:v:hsdp" opt
 do
@@ -170,14 +189,14 @@ fi
 
 # set the eula=true file nonsense
 echo "Setting up eula.txt..."
-echo "eula=true" > eula.txt
+write_eula_file
 
 # setup properties file
 if [ "$SKIP_PROPERTIES" == true ]
 then
   echo "Skipping writing default properties..."
 else
-  echo "${DEFAULT_PROPERTIES}" > server.properties
+  write_default_properties
 fi
 
 # start a screen with the server in it
