@@ -33,7 +33,6 @@ usage()
 EOT
 }
 
-URL_BASE="https://s3.amazonaws.com/Minecraft.Download/versions/"
 FILE_NAME="minecraft_server.jar"
 SCREEN_NAME="uhc_minecraft"
 
@@ -65,23 +64,26 @@ motd=Insorum UHC"
 
 #=== FUNCTION =========================================================================
 # NAME: download_jar
-# DESCRIPTION: Downloads the JAR of version $VERSION to the file name $FILE_NAME
-# from the URL ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar. Sets
-# $JAR_DOWNLOADED when downloaded.
+# DESCRIPTION: Downloads the JAR of version $VERSION (parameter 2) to the file name
+# $FILE_NAME (parameter 1) from the URL
+# https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/minecraft_server.${VERSION}.jar.
+# Sets $JAR_DOWNLOADED when downloaded.
+# PARAMETER 1: File name to write to
+# PARAMETER 2: Version # to download
 # RETURNS: 0 on success and 1 on failure to download
 #======================================================================================
 download_jar()
 {
   # fetch the jar with the given version
-  wget --no-check-certificate -O ${FILE_NAME} ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar
+  wget --no-check-certificate -O "$1" "https://s3.amazonaws.com/Minecraft.Download/versions/$2/minecraft_server.$2.jar"
 
   if [ $? -eq 0 ]
   then
-    echo "Downloaded server version ${VERSION}"
+    echo "Downloaded server version $2"
     JAR_DOWNLOADED=0
     return 0
   else
-    echo "ERROR: Couldn't fetch server version ${VERSION}" >&2
+    echo "ERROR: Couldn't fetch server version $2" >&2
     return 1
   fi
 }
@@ -90,13 +92,14 @@ download_jar()
 # NAME: download_jar_prompts
 # DESCRIPTION: Asks the user for a version # and attempts to download that version.
 # Reasks for the version number after every failed download
+# PARAMETER 1: Name of the file to save into
 #======================================================================================
 download_jar_prompts()
 {
   until [ ${JAR_DOWNLOADED} ]
   do
     read_version
-    download_jar
+    download_jar "$1" "$VERSION"
   done
 }
 
@@ -154,14 +157,14 @@ else
   # if user provided only attempt to download that one
   if [ ! -z "$VERSION" ]
   then
-    if [ ! download_jar ]
+    if [ ! download_jar "$FILE_NAME" "$VERSION" ]
     then
       echo "Failed to download chosen version. Cancelling" >&2
       exit 1
     fi
   # otherwise we loop and ask the user until we find one
   else
-    download_jar_prompts
+    download_jar_prompts "$FILE_NAME"
   fi
 fi
 
