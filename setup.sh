@@ -3,7 +3,12 @@
 URL_BASE="https://s3.amazonaws.com/Minecraft.Download/versions/"
 FILE_NAME="minecraft_server.jar"
 SCREEN_NAME="uhc_minecraft"
-SKIP_INSTALL=false
+
+# all false by default
+SKIP_INSTALL=1
+SKIP_DOWNLOAD=1
+SKIP_PROPERTIES=1
+JAR_DOWNLOADED=1
 
 USAGE="$(basename "$0") [-hdsp] [-n screen_name] [-j jar_name] [-v version]
 
@@ -36,16 +41,52 @@ generate-structures=true
 view-distance=8
 motd=Insorum UHC"
 
-download_jar()
+# Downloads the version set in $VERSION (prompts for input if wasnt able to fetch it
+# Returns 0 on success and 1 on failure
+download_jar_version()
 {
-  if ! wget --no-check-certificate -O ${FILE_NAME} ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar
+  # if version isnt set then prompt for it
+  if [ ! -z "$VERSION" ]
   then
+    read_version
+  fi
+
+  # fetch the jar with the given version
+  wget --no-check-certificate -O ${FILE_NAME} ${URL_BASE}${VERSION}/minecraft_server.${VERSION}.jar
+
+  if [ $? -eq 0 ]
+  then
+    echo "Downloaded server version ${VERSION}"
+    JAR_DOWNLOADED=0
+    return 0
+  else
     echo "ERROR: Couldn't fetch server version ${VERSION}" >&2
     return 1
-  else
-    echo "Downloaded server version ${VERSION}"
-    return 0
   fi
+}
+
+
+download_jar_prompts()
+{
+  until [ ${JAR_DOWNLOADED} ]
+  do
+    read_version
+    download_jar
+  done
+}
+
+# read the version # to use
+read_version()
+{
+  read -e -p "What version do you like to install? " VERSION
+}
+
+# installs the required dependencies we need to run
+install_dependencies()
+{
+  echo "Installing dependencies"
+  apt-get update
+  apt-get install -y screen default-jdk
 }
 
 # parse all the options
@@ -55,9 +96,9 @@ do
   n) SCREEN_NAME="${OPTARG}";;
   j) FILE_NAME="${OPTARG}";;
   v) VERSION="${OPTARG}";;
-  d) SKIP_INSTALL=true;;
-  s) SKIP_DOWNLOAD=true;;
-  p) SKIP_PROPERTIES=true;;
+  d) SKIP_INSTALL=0;;
+  s) SKIP_DOWNLOAD=0;;
+  p) SKIP_PROPERTIES=0;;
   [?h])
     echo "${USAGE}"
     exit 1
@@ -66,41 +107,30 @@ do
 done
 
 # update packages and install our dependencies
-if ! ${SKIP_INSTALL}
+if [ ${SKIP_INSTALL} ]
 then
-  echo "Installing dependencies"
-  apt-get update
-  apt-get install -y screen default-jdk
-else
   echo "Skipping dependency install..."
+else
+  install_dependencies
 fi
 
-if ! ${SKIP_DOWNLOAD}
+if [ ${SKIP_DOWNLOAD} ]
 then
+  echo "Skipping JAR download..."
+  JAR_DOWNLOADED=0
+else
   # if user provided only attempt to download that one
   if [ ! -z "$VERSION" ]
   then
-    if ! download_jar
+    if [ ! download_jar_version ]
     then
       echo "Failed to download chosen version. Cancelling" >&2
       exit 1
     fi
   # otherwise we loop and ask the user until we find one
   else
-    while true
-    do
-      read -e -p "What version do you like to install? " VERSION
-      # attempt to fetch the server JAR
-      if download_jar
-      then
-        break
-      else
-        continue
-      fi
-    done
+    download_jar_prompts
   fi
-else
-  echo "Skipping JAR download..."
 fi
 
 # set the eula=true file nonsense
