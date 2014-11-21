@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #======================================================================================
 #
 # FILE: setup.sh
@@ -89,7 +89,7 @@ download_jar_prompts()
 #======================================================================================
 read_version()
 {
-  read -e -p "What version do you like to install? " VERSION
+  read -p "What version do you like to install? " VERSION
 }
 
 #=== FUNCTION =========================================================================
@@ -200,7 +200,7 @@ fi
 
 # start a screen with the server in it
 echo "Starting up server..."
-if screen -dmS "${SCREEN_NAME}" -c bash "java -jar ${FILE_NAME} nogui"
+if screen -dmS "${SCREEN_NAME}" bash -c "java -jar ${FILE_NAME} nogui"
 then
   echo "Server started, you can open the console via screen by using the command: 'screen -r ${SCREEN_NAME}'"
 else
