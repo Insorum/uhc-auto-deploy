@@ -37,10 +37,10 @@ FILE_NAME="minecraft_server.jar"
 SCREEN_NAME="uhc_minecraft"
 
 # all false by default
-SKIP_INSTALL=1
-SKIP_DOWNLOAD=1
-SKIP_PROPERTIES=1
-JAR_DOWNLOADED=1
+SKIP_INSTALL=false
+SKIP_DOWNLOAD=false
+SKIP_PROPERTIES=false
+JAR_DOWNLOADED=false
 
 DEFAULT_PROPERTIES="op-permission-level=4
 allow-nether=true
@@ -80,7 +80,7 @@ download_jar()
   if [ $? -eq 0 ]
   then
     echo "Downloaded server version $2"
-    JAR_DOWNLOADED=0
+    JAR_DOWNLOADED=true
     return 0
   else
     echo "ERROR: Couldn't fetch server version $2" >&2
@@ -96,7 +96,7 @@ download_jar()
 #======================================================================================
 download_jar_prompts()
 {
-  until [ ${JAR_DOWNLOADED} ]
+  until [ "$JAR_DOWNLOADED" == true ]
   do
     read_version
     download_jar "$1" "$VERSION"
@@ -125,15 +125,15 @@ install_dependencies()
 }
 
 # parse all the options
-while getopts "n:j:v:hsp" opt
+while getopts "n:j:v:hsdp" opt
 do
   case "$opt" in
   n) SCREEN_NAME="${OPTARG}";;
   j) FILE_NAME="${OPTARG}";;
   v) VERSION="${OPTARG}";;
-  d) SKIP_INSTALL=0;;
-  s) SKIP_DOWNLOAD=0;;
-  p) SKIP_PROPERTIES=0;;
+  d) SKIP_INSTALL=true;;
+  s) SKIP_DOWNLOAD=true;;
+  p) SKIP_PROPERTIES=true;;
   [?h])
     usage
     exit 1
@@ -142,17 +142,17 @@ do
 done
 
 # update packages and install our dependencies
-if [ ${SKIP_INSTALL} ]
+if [ "$SKIP_INSTALL" == true ]
 then
   echo "Skipping dependency install..."
 else
   install_dependencies
 fi
 
-if [ ${SKIP_DOWNLOAD} ]
+if [ "$SKIP_DOWNLOAD" == true ]
 then
   echo "Skipping JAR download..."
-  JAR_DOWNLOADED=0
+  JAR_DOWNLOADED=true
 else
   # if user provided only attempt to download that one
   if [ ! -z "$VERSION" ]
@@ -173,16 +173,16 @@ echo "Setting up eula.txt..."
 echo "eula=true" > eula.txt
 
 # setup properties file
-if ! ${SKIP_PROPERTIES}
+if [ "$SKIP_PROPERTIES" == true ]
 then
-  echo "${DEFAULT_PROPERTIES}" > server.properties
-else
   echo "Skipping writing default properties..."
+else
+  echo "${DEFAULT_PROPERTIES}" > server.properties
 fi
 
 # start a screen with the server in it
 echo "Starting up server..."
-if screen -dmS ${SCREEN_NAME} -c bash "java -jar ${FILE_NAME} nogui"
+if screen -dmS "${SCREEN_NAME}" -c bash "java -jar ${FILE_NAME} nogui"
 then
   echo "Server started, you can open the console via screen by using the command: 'screen -r ${SCREEN_NAME}'"
 else
