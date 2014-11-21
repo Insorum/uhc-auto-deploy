@@ -1,4 +1,37 @@
 #!/bin/sh
+#======================================================================================
+#
+# FILE: setup.sh
+#
+# USAGE: setup.sh [-hdsp] [-n screen_name] [-j jar_name] [-v version]
+#
+# DESCRIPTION: Sets up a base server
+#
+# OPTIONS: see function ’usage’ below
+# REQUIREMENTS: screen, jdk (installable via script)
+# BUGS: ---
+# NOTES: ---
+# AUTHOR: Graham Howden, graham_howden1@yahoo.co.uk
+#======================================================================================
+
+#=== FUNCTION =========================================================================
+# NAME: usage
+# DESCRIPTION: Display usage information for this script.
+#======================================================================================
+usage()
+{
+  cat <<-EOT
+  usage: $(basename "$0") [-hdsp] [-n screen_name] [-j jar_name] [-v version]
+
+    -h show this help message
+    -n choose the screen name to use (default '${SCREEN_NAME}')
+    -j choose the name of the server jar to create (default '${FILE_NAME}'
+    -v version to download (will be prompted if not provided)
+    -d skips screen/java install
+    -s skips JAR download
+    -p skips server.properties write
+EOT
+}
 
 URL_BASE="https://s3.amazonaws.com/Minecraft.Download/versions/"
 FILE_NAME="minecraft_server.jar"
@@ -9,17 +42,6 @@ SKIP_INSTALL=1
 SKIP_DOWNLOAD=1
 SKIP_PROPERTIES=1
 JAR_DOWNLOADED=1
-
-USAGE="$(basename "$0") [-hdsp] [-n screen_name] [-j jar_name] [-v version]
-
-where:
-    -h show this help message
-    -n choose the screen name to use (default '${SCREEN_NAME}')
-    -j choose the name of the server jar to create (default '${FILE_NAME}'
-    -v version to download (will be prompted if not provided)
-    -d skips screen/java install
-    -s skips JAR download
-    -p skips server.properties write"
 
 DEFAULT_PROPERTIES="op-permission-level=4
 allow-nether=true
@@ -93,7 +115,7 @@ do
   s) SKIP_DOWNLOAD=0;;
   p) SKIP_PROPERTIES=0;;
   [?h])
-    echo "${USAGE}"
+    usage
     exit 1
     ;;
   esac
