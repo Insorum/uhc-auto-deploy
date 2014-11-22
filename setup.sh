@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #======================================================================================
 #
 # FILE: setup.sh
@@ -76,7 +76,7 @@ download_jar()
 #======================================================================================
 download_jar_prompts()
 {
-  until [ "$JAR_DOWNLOADED" == true ]
+  until [ "$JAR_DOWNLOADED" = true ]
   do
     read_version
     download_jar "$1" "$VERSION"
@@ -160,14 +160,14 @@ do
 done
 
 # update packages and install our dependencies
-if [ "$SKIP_INSTALL" == true ]
+if [ "$SKIP_INSTALL" = true ]
 then
   echo "Skipping dependency install..."
 else
   install_dependencies
 fi
 
-if [ "$SKIP_DOWNLOAD" == true ]
+if [ "$SKIP_DOWNLOAD" = true ]
 then
   echo "Skipping JAR download..."
   JAR_DOWNLOADED=true
@@ -191,7 +191,7 @@ echo "Setting up eula.txt..."
 write_eula_file
 
 # setup properties file
-if [ "$SKIP_PROPERTIES" == true ]
+if [ "$SKIP_PROPERTIES" = true ]
 then
   echo "Skipping writing default properties..."
 else
@@ -200,7 +200,7 @@ fi
 
 # start a screen with the server in it
 echo "Starting up server..."
-if screen -dmS "${SCREEN_NAME}" bash -c "java -jar ${FILE_NAME} nogui"
+if screen -dmS "${SCREEN_NAME}" sh -c "java -jar ${FILE_NAME} nogui"
 then
   echo "Server started, you can open the console via screen by using the command: 'screen -r ${SCREEN_NAME}'"
 else
