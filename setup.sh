@@ -14,14 +14,14 @@
 # AUTHOR: Graham Howden, graham_howden1@yahoo.co.uk
 #======================================================================================
 
-FILE_NAME="minecraft_server.jar"  # file name to store JAR as
-SCREEN_NAME="uhc_minecraft"       # screen name to run under
+file_name="minecraft_server.jar"  # file name to store JAR as
+screen_name="uhc_minecraft"       # screen name to run under
 
 # all false by default
-SKIP_INSTALL=false
-SKIP_DOWNLOAD=false
-SKIP_PROPERTIES=false
-JAR_DOWNLOADED=false
+skip_install=false
+skip_download=false
+skip_properties=false
+jar_downloaded=false
 
 #=== FUNCTION =========================================================================
 # NAME: usage
@@ -33,8 +33,8 @@ usage()
   usage: $(basename "$0") [-hdsp] [-n screen_name] [-j jar_name] [-v version]
 
     -h show this help message
-    -n choose the screen name to use (default '${SCREEN_NAME}')
-    -j choose the name of the server jar to create (default '${FILE_NAME}'
+    -n choose the screen name to use (default '${screen_name}')
+    -j choose the name of the server jar to create (default '${file_name}'
     -v version to download (will be prompted if not provided)
     -d skips screen/java install
     -s skips JAR download
@@ -44,10 +44,10 @@ EOT
 
 #=== FUNCTION =========================================================================
 # NAME: download_jar
-# DESCRIPTION: Downloads the JAR of version $VERSION (parameter 2) to the file name
-# $FILE_NAME (parameter 1) from the URL
-# https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/minecraft_server.${VERSION}.jar.
-# Sets $JAR_DOWNLOADED when downloaded.
+# DESCRIPTION: Downloads the JAR of version $version (parameter 2) to the file name
+# $file_name (parameter 1) from the URL
+# https://s3.amazonaws.com/Minecraft.Download/versions/${version}/minecraft_server.${version}.jar.
+# Sets $jar_downloaded when downloaded.
 # PARAMETER 1: File name to write to
 # PARAMETER 2: Version # to download
 # RETURNS: 0 on success and 1 on failure to download
@@ -60,7 +60,7 @@ download_jar()
   if [ $? -eq 0 ]
   then
     echo "Downloaded server version $2"
-    JAR_DOWNLOADED=true
+    jar_downloaded=true
     return 0
   else
     echo "ERROR: Couldn't fetch server version $2" >&2
@@ -76,20 +76,20 @@ download_jar()
 #======================================================================================
 download_jar_prompts()
 {
-  until [ "$JAR_DOWNLOADED" = true ]
+  until [ "$jar_downloaded" = true ]
   do
     read_version
-    download_jar "$1" "$VERSION"
+    download_jar "$1" "$version"
   done
 }
 
 #=== FUNCTION =========================================================================
 # NAME: read_version
-# DESCRIPTION: Asks the user for a version number and reads it into $VERSION
+# DESCRIPTION: Asks the user for a version number and reads it into $version
 #======================================================================================
 read_version()
 {
-  read -p "What version do you like to install? " VERSION
+  read -p "What version do you like to install? " version
 }
 
 #=== FUNCTION =========================================================================
@@ -146,12 +146,12 @@ write_eula_file()
 while getopts "n:j:v:hsdp" opt
 do
   case "$opt" in
-  n) SCREEN_NAME="${OPTARG}";;
-  j) FILE_NAME="${OPTARG}";;
-  v) VERSION="${OPTARG}";;
-  d) SKIP_INSTALL=true;;
-  s) SKIP_DOWNLOAD=true;;
-  p) SKIP_PROPERTIES=true;;
+  n) screen_name="${OPTARG}";;
+  j) file_name="${OPTARG}";;
+  v) version="${OPTARG}";;
+  d) skip_install=true;;
+  s) skip_download=true;;
+  p) skip_properties=true;;
   [?h])
     usage
     exit 1
@@ -160,29 +160,29 @@ do
 done
 
 # update packages and install our dependencies
-if [ "$SKIP_INSTALL" = true ]
+if [ "$skip_install" = true ]
 then
   echo "Skipping dependency install..."
 else
   install_dependencies
 fi
 
-if [ "$SKIP_DOWNLOAD" = true ]
+if [ "$skip_download" = true ]
 then
   echo "Skipping JAR download..."
-  JAR_DOWNLOADED=true
+  jar_downloaded=true
 else
   # if user provided only attempt to download that one
-  if [ ! -z "$VERSION" ]
+  if [ ! -z "$version" ]
   then
-    if [ ! download_jar "$FILE_NAME" "$VERSION" ]
+    if [ ! download_jar "$file_name" "$version" ]
     then
       echo "Failed to download chosen version. Cancelling" >&2
       exit 1
     fi
   # otherwise we loop and ask the user until we find one
   else
-    download_jar_prompts "$FILE_NAME"
+    download_jar_prompts "$file_name"
   fi
 fi
 
@@ -191,7 +191,7 @@ echo "Setting up eula.txt..."
 write_eula_file
 
 # setup properties file
-if [ "$SKIP_PROPERTIES" = true ]
+if [ "$skip_properties" = true ]
 then
   echo "Skipping writing default properties..."
 else
@@ -200,9 +200,9 @@ fi
 
 # start a screen with the server in it
 echo "Starting up server..."
-if screen -dmS "${SCREEN_NAME}" sh -c "java -jar ${FILE_NAME} nogui"
+if screen -dmS "${screen_name}" sh -c "java -jar ${file_name} nogui"
 then
-  echo "Server started, you can open the console via screen by using the command: 'screen -r ${SCREEN_NAME}'"
+  echo "Server started, you can open the console via screen by using the command: 'screen -r ${screen_name}'"
 else
-  echo "Failed to start the server on screen named ${SCREEN_NAME}, server may need to be started manually" >&2
+  echo "Failed to start the server on screen named ${screen_name}, server may need to be started manually" >&2
 fi
