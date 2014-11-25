@@ -228,7 +228,7 @@ case "$subcommand" in
         exit ${E_FAILED_JAR_DOWNLOAD}
       fi
     # else if the JAR file doesn't exist or we're in overwrite mode
-    elif [[ "$overwrite" = true ]] || [[ ! -e "${file_name}" ]]
+    elif [ "$overwrite" = true ] || [ ! -e "${file_name}" ]
     then
       download_jar_prompts "$file_name"
     else
@@ -236,7 +236,7 @@ case "$subcommand" in
     fi
 
     # set the eula=true file nonsense
-    if [[ "$overwrite" = true ]] || [[ ! -e 'eula.txt' ]]
+    if [ "$overwrite" = true ] || [ ! -e 'eula.txt' ]
     then
       echo 'Setting up eula.txt...'
       write_eula_file
@@ -245,7 +245,7 @@ case "$subcommand" in
     fi
 
     # setup properties file
-    if [[ "$overwrite" = true ]] || [[ ! -e 'server.properties' ]]
+    if [ "$overwrite" = true ] || [ ! -e 'server.properties' ]
     then
       echo 'Setting up server.properties...'
       write_default_properties
@@ -254,7 +254,7 @@ case "$subcommand" in
     fi
 
     # handle starting the server up
-    if [[ "$skip_start" = true ]]
+    if [ "$skip_start" = true ]
     then
       echo 'Skipping server startup...'
     elif start_server
@@ -271,7 +271,7 @@ case "$subcommand" in
     # attempt to reattach to the screen instance
     reattach_console
 
-    if [[ $? -ne 0 ]]
+    if [ $? -ne 0 ]
     then
       echo 'Failed to connect to the console, is the server running?'
     fi
