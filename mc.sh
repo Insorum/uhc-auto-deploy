@@ -15,7 +15,6 @@
 
 file_name="minecraft_server.jar"  # file name to store JAR as
 screen_name="uhc_minecraft"       # screen name to run under
-startup_command="java -jar ${file_name} nogui"  # command to use to startup the server
 
 # ERROR CODES
 E_FAILED_DEPENDENCIES=100
@@ -47,9 +46,15 @@ usage()
         -s    - Skip startup of the server after install
 
     console   - attemtps to attach to the current console
+
     download  - download a server jar
+
     start     - attempts to start the server, if the server is already running loads the console instead
+      options:
+        -M    - set the max amount of RAM for the server to use, defaults to 2048M
+
     stop      - attempts to stop a running server
+
     help      - this help message
 
 EOT
@@ -156,10 +161,11 @@ write_eula_file()
 #=== FUNCTION =========================================================================
 # NAME: start_server
 # DESCRIPTION: Attempts to start the server via screen
+# PARAMETER 1: Max amount of ram to use
 #======================================================================================
 start_server()
 {
-  screen -dmS "$screen_name" sh -c "${startup_command}"
+  screen -dmS "$screen_name" sh -c "java -jar -Xmx$1 ${file_name} nogui"  # command to use to start the server
   return $?
 }
 
@@ -262,10 +268,18 @@ case "$subcommand" in
     exit $?
     ;;
   start)
+    while getopts "M" opt
+    do
+      case "$opt" in
+      M) max_ram="$OPTARG";;
+      *) exit ${E_UNKNOWN_OPTION};;
+      esac
+    done
+
     # reattach to console if we can, if not start the server
     if ! reattach_console
     then
-      if start_server
+      if start_server ${max_ram:-2048M}
       then
         echo "Server started, you can open the console via screen by using the command: '$0 console'"
       else
