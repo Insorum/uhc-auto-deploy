@@ -231,8 +231,25 @@ case "$subcommand" in
     exit 1
     ;;
   download)
-    echo 'Command not implemented yet!'
-    exit 1
+    while getopts "v:" opt
+    do
+      case "$opt" in
+      v) version="$OPTARG";;
+      *) exit ${E_UNKNOWN_OPTION};;
+      esac
+    done
+
+    # if $version is supplied attempt to download the specific JAR
+    if [ ! -z "$version" ]
+    then
+      if ! download_jar "$file_name" "$version"
+      then
+        exit ${E_FAILED_JAR_DOWNLOAD}
+      fi
+    # else loop until supplied version is correct
+    else
+      download_jar_prompts "$file_name"
+    fi
     ;;
   stop)
     echo 'Command not implemented yet!'
