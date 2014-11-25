@@ -3,12 +3,12 @@
 #
 # FILE: setup.sh
 #
-# USAGE: setup.sh [-hdsp] [-n screen_name] [-j jar_name] [-v version]
+# USAGE: see function 'usage' below
 #
 # DESCRIPTION: Sets up a base server
 #
-# OPTIONS: see function ’usage’ below
-# REQUIREMENTS: screen, jdk (installable via script)
+# OPTIONS: see function 'usage' below
+# REQUIREMENTS: screen, jdk (both installable via script)
 # NOTES: ---
 # AUTHOR: Graham Howden, graham_howden1@yahoo.co.uk
 #======================================================================================
