@@ -117,7 +117,7 @@ install_dependencies()
 {
   echo "Installing dependencies"
   apt-get install -y screen default-jdk
-  return 0
+  return $?
 }
 
 #=== FUNCTION =========================================================================
