@@ -180,6 +180,17 @@ reattach_console()
   return $?
 }
 
+#======================================================================================
+#   SCRIPT START
+#======================================================================================
+
+if [ $# -eq 0 ]
+then
+  echo "Must provide a subcommand:"
+  usage
+  exit 1
+fi
+
 subcommand="$1"
 
 # shift to remove subcommand arg
