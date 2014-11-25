@@ -17,12 +17,6 @@
 file_name="minecraft_server.jar"  # file name to store JAR as
 screen_name="uhc_minecraft"       # screen name to run under
 
-# all false by default
-skip_install=false
-skip_download=false
-skip_properties=false
-jar_downloaded=false
-
 #=== FUNCTION =========================================================================
 # NAME: usage
 # DESCRIPTION: Display usage information for this script.
@@ -55,9 +49,7 @@ EOT
 download_jar()
 {
   # fetch the jar with the given version
-  wget --no-check-certificate -O "$1" "https://s3.amazonaws.com/Minecraft.Download/versions/$2/minecraft_server.$2.jar"
-
-  if [ $? -eq 0 ]
+  if wget --no-check-certificate -O "$1" "https://s3.amazonaws.com/Minecraft.Download/versions/$2/minecraft_server.$2.jar"
   then
     echo "Downloaded server version $2"
     jar_downloaded=true
@@ -160,14 +152,14 @@ do
 done
 
 # update packages and install our dependencies
-if [ "$skip_install" = true ]
+if [ "${skip_install:-false}" = true ]
 then
   echo "Skipping dependency install..."
 else
   install_dependencies
 fi
 
-if [ "$skip_download" = true ]
+if [ "${skip_download:-false}" = true ]
 then
   echo "Skipping JAR download..."
   jar_downloaded=true
@@ -175,7 +167,7 @@ else
   # if user provided only attempt to download that one
   if [ ! -z "$version" ]
   then
-    if [ ! download_jar "$file_name" "$version" ]
+    if ! download_jar "$file_name" "$version"
     then
       echo "Failed to download chosen version. Cancelling" >&2
       exit 1
@@ -191,7 +183,7 @@ echo "Setting up eula.txt..."
 write_eula_file
 
 # setup properties file
-if [ "$skip_properties" = true ]
+if [ "${skip_properties:-false}" = true ]
 then
   echo "Skipping writing default properties..."
 else
