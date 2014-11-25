@@ -15,6 +15,7 @@
 
 file_name="minecraft_server.jar"  # file name to store JAR as
 screen_name="uhc_minecraft"       # screen name to run under
+startup_command="java -jar ${file_name} nogui"  # command to use to startup the server
 
 # ERROR CODES
 E_FAILED_DEPENDENCIES=100
@@ -33,6 +34,7 @@ usage()
     $0 console
     $0 download
     $0 stop
+    $0 start
     $0 help
 
   subcommands:
@@ -46,6 +48,7 @@ usage()
 
     console   - attemtps to attach to the current console
     download  - download a server jar
+    start     - attempts to start the server, if the server is already running loads the console instead
     stop      - attempts to stop a running server
     help      - this help message
 
@@ -150,6 +153,26 @@ write_eula_file()
   echo "eula=true" > eula.txt
 }
 
+#=== FUNCTION =========================================================================
+# NAME: start_server
+# DESCRIPTION: Attempts to start the server via screen
+#======================================================================================
+start_server()
+{
+  screen -dmS "$screen_name" sh -c "${startup_command}"
+  return $?
+}
+
+#=== FUNCTION =========================================================================
+# NAME: start_server
+# DESCRIPTION: Attempts to reattach to the screen
+#======================================================================================
+reattach_console()
+{
+  screen -r "$screen_name"
+  return $?
+}
+
 subcommand="$1"
 
 # shift to remove subcommand arg
@@ -216,7 +239,7 @@ case "$subcommand" in
     if [[ "$skip_start" = true ]]
     then
       echo 'Skipping server startup...'
-    elif screen -dmS "${screen_name}" sh -c "java -jar ${file_name} nogui"
+    elif start_server
     then
       echo "Server started, you can open the console via screen by using the command: '$0 console'"
     else
@@ -227,8 +250,28 @@ case "$subcommand" in
     echo 'Install complete!'
     ;;
   console)
-    echo 'Command not implemented yet!'
-    exit 1
+    # attempt to reattach to the screen instance
+    reattach_console
+
+    if [[ $? -ne 0 ]]
+    then
+      echo 'Failed to connect to the console, is the server running?'
+    fi
+
+    # exit with screen exit code
+    exit $?
+    ;;
+  start)
+    # reattach to console if we can, if not start the server
+    if ! reattach_console
+    then
+      if start_server
+      then
+        echo "Server started, you can open the console via screen by using the command: '$0 console'"
+      else
+        echo "Failed to start the server on screen named ${screen_name}, server may need to be started manually" >&2
+      fi
+    fi
     ;;
   download)
     while getopts "v:" opt
@@ -252,8 +295,9 @@ case "$subcommand" in
     fi
     ;;
   stop)
-    echo 'Command not implemented yet!'
-    exit 1
+    # force the screen to quit
+    screen -r -S "$screen_name" -X quit 2>/dev/null
+    exit $?
     ;;
   *)
     usage
