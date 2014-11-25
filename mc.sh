@@ -116,6 +116,7 @@ read_version()
 install_dependencies()
 {
   echo "Installing dependencies"
+  apt-get update
   apt-get install -y screen default-jdk
   return $?
 }
