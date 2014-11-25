@@ -44,6 +44,8 @@ usage()
         -v    - version to download (if provided will download over existing file, if not supplied and no file exists
                   user will be prompted for a version number)
         -s    - Skip startup of the server after install
+        -M    - set the max amount of RAM for the server to use when starting up at the end of the install,
+                  defaults to 2048M
 
     console   - attemtps to attach to the current console
 
@@ -203,12 +205,13 @@ case "$subcommand" in
 
     # check if overwrite was set
     overwrite=false;
-    while getopts "v:os" opt
+    while getopts "M:v:os" opt
     do
       case "$opt" in
       o) overwrite=true;;
       v) version="$OPTARG";;
       s) skip_start=true;;
+      M) max_ram="$OPTARG";;
       *) exit ${E_UNKNOWN_OPTION};;
       esac
     done
@@ -257,7 +260,7 @@ case "$subcommand" in
     if [ "$skip_start" = true ]
     then
       echo 'Skipping server startup...'
-    elif start_server
+    elif start_server ${max_ram:-2048M}
     then
       echo "Server started, you can open the console via screen by using the command: '$0 console'"
     else
@@ -280,7 +283,7 @@ case "$subcommand" in
     exit $?
     ;;
   start)
-    while getopts "M" opt
+    while getopts "M:" opt
     do
       case "$opt" in
       M) max_ram="$OPTARG";;
