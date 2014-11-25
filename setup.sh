@@ -9,13 +9,17 @@
 #
 # OPTIONS: see function ’usage’ below
 # REQUIREMENTS: screen, jdk (installable via script)
-# BUGS: ---
 # NOTES: ---
 # AUTHOR: Graham Howden, graham_howden1@yahoo.co.uk
 #======================================================================================
 
 file_name="minecraft_server.jar"  # file name to store JAR as
 screen_name="uhc_minecraft"       # screen name to run under
+
+# ERROR CODES
+E_FAILED_DEPENDENCIES=100
+E_FAILED_JAR_DOWNLOAD=101
+E_UNKNOWN_OPTION=102
 
 #=== FUNCTION =========================================================================
 # NAME: usage
@@ -24,15 +28,27 @@ screen_name="uhc_minecraft"       # screen name to run under
 usage()
 {
   cat <<-EOT
-  usage: $(basename "$0") [-hdsp] [-n screen_name] [-j jar_name] [-v version]
+  usage:
+    $0 install [-o] [-s] [-v version]
+    $0 console
+    $0 download
+    $0 stop
+    $0 help
 
-    -h show this help message
-    -n choose the screen name to use (default '${screen_name}')
-    -j choose the name of the server jar to create (default '${file_name}'
-    -v version to download (will be prompted if not provided)
-    -d skips screen/java install
-    -s skips JAR download
-    -p skips server.properties write
+  subcommands:
+
+    install   - downloads the .jar, sets up server.properties + eula.txt and starts the server
+      options:
+        -o    - overwrite any existing files instead of skipping them (server JAR, server.properties and eula.txt)
+        -v    - version to download (if provided will download over existing file, if not supplied and no file exists
+                  user will be prompted for a version number)
+        -s    - Skip startup of the server after install
+
+    console   - attemtps to attach to the current console
+    download  - download a server jar
+    stop      - attempts to stop a running server
+    help      - this help message
+
 EOT
 }
 
@@ -44,7 +60,7 @@ EOT
 # Sets $jar_downloaded when downloaded.
 # PARAMETER 1: File name to write to
 # PARAMETER 2: Version # to download
-# RETURNS: 0 on success and 1 on failure to download
+# RETURNS: 0 on success and E_FAILED_JAR_DOWNLOAD on failure to download
 #======================================================================================
 download_jar()
 {
@@ -56,7 +72,7 @@ download_jar()
     return 0
   else
     echo "ERROR: Couldn't fetch server version $2" >&2
-    return 1
+    return ${E_FAILED_JAR_DOWNLOAD}
   fi
 }
 
@@ -92,8 +108,8 @@ read_version()
 install_dependencies()
 {
   echo "Installing dependencies"
-  apt-get update
   apt-get install -y screen default-jdk
+  return 0
 }
 
 #=== FUNCTION =========================================================================
@@ -134,67 +150,98 @@ write_eula_file()
   echo "eula=true" > eula.txt
 }
 
-# parse all the options
-while getopts "n:j:v:hsdp" opt
-do
-  case "$opt" in
-  n) screen_name="${OPTARG}";;
-  j) file_name="${OPTARG}";;
-  v) version="${OPTARG}";;
-  d) skip_install=true;;
-  s) skip_download=true;;
-  p) skip_properties=true;;
-  [?h])
+subcommand="$1"
+
+# shift to remove subcommand arg
+shift
+
+# check command ran
+case "$subcommand" in
+  install)
+    echo 'Starting install...'
+
+    # check if overwrite was set
+    overwrite=false;
+    while getopts "v:os" opt
+    do
+      case "$opt" in
+      o) overwrite=true;;
+      v) version="$OPTARG";;
+      s) skip_start=true;;
+      *) exit ${E_UNKNOWN_OPTION};;
+      esac
+    done
+
+    # Handle dependencies first
+    if ! install_dependencies
+    then
+      echo 'Failed to install required dependencies'
+      exit ${E_FAILED_DEPENDENCIES}
+    fi
+
+    # if $version is supplied attempt to download the specific JAR
+    if [ ! -z "$version" ]
+    then
+      if ! download_jar "$file_name" "$version"
+      then
+        exit ${E_FAILED_JAR_DOWNLOAD}
+      fi
+    # else if the JAR file doesn't exist or we're in overwrite mode
+    elif [[ "$overwrite" = true ]] || [[ ! -e "${file_name}" ]]
+    then
+      download_jar_prompts "$file_name"
+    else
+      echo 'Skipping JAR download...'
+    fi
+
+    # set the eula=true file nonsense
+    if [[ "$overwrite" = true ]] || [[ ! -e 'eula.txt' ]]
+    then
+      echo 'Setting up eula.txt...'
+      write_eula_file
+    else
+      echo 'Skipping eula.txt file...'
+    fi
+
+    # setup properties file
+    if [[ "$overwrite" = true ]] || [[ ! -e 'server.properties' ]]
+    then
+      echo 'Setting up server.properties...'
+      write_default_properties
+    else
+      echo 'Skipping writing default properties...'
+    fi
+
+    # handle starting the server up
+    if [[ "$skip_start" = true ]]
+    then
+      echo 'Skipping server startup...'
+    elif screen -dmS "${screen_name}" sh -c "java -jar ${file_name} nogui"
+    then
+      echo "Server started, you can open the console via screen by using the command: '$0 console'"
+    else
+      echo "Failed to start the server on screen named ${screen_name}, server may need to be started manually" >&2
+    fi
+
+    # All completed :)
+    echo 'Install complete!'
+    ;;
+  console)
+    echo 'Command not implemented yet!'
+    exit 1
+    ;;
+  download)
+    echo 'Command not implemented yet!'
+    exit 1
+    ;;
+  stop)
+    echo 'Command not implemented yet!'
+    exit 1
+    ;;
+  *)
     usage
     exit 1
     ;;
-  esac
-done
+esac
 
-# update packages and install our dependencies
-if [ "${skip_install:-false}" = true ]
-then
-  echo "Skipping dependency install..."
-else
-  install_dependencies
-fi
-
-if [ "${skip_download:-false}" = true ]
-then
-  echo "Skipping JAR download..."
-  jar_downloaded=true
-else
-  # if user provided only attempt to download that one
-  if [ ! -z "$version" ]
-  then
-    if ! download_jar "$file_name" "$version"
-    then
-      echo "Failed to download chosen version. Cancelling" >&2
-      exit 1
-    fi
-  # otherwise we loop and ask the user until we find one
-  else
-    download_jar_prompts "$file_name"
-  fi
-fi
-
-# set the eula=true file nonsense
-echo "Setting up eula.txt..."
-write_eula_file
-
-# setup properties file
-if [ "${skip_properties:-false}" = true ]
-then
-  echo "Skipping writing default properties..."
-else
-  write_default_properties
-fi
-
-# start a screen with the server in it
-echo "Starting up server..."
-if screen -dmS "${screen_name}" sh -c "java -jar ${file_name} nogui"
-then
-  echo "Server started, you can open the console via screen by using the command: 'screen -r ${screen_name}'"
-else
-  echo "Failed to start the server on screen named ${screen_name}, server may need to be started manually" >&2
-fi
+exit 0
